@@ -180,7 +180,7 @@ dsh --profile <名字> --dump-config | Select-String self-compact
 
 - 摘要正文由宿主摘要器写，本插件不改它的提示词。要改就得 disable `compaction-basic` 行、子类化 `CompactionEngine`、并镜像它整套配置——取舍理由见[设计文档](docs/zh-cn/DESIGN.md)。
 - 只管主会话：子代理的上下文随它自己结束，压了也不赚。
-- 引擎按会话解析：preset 型宿主会关掉 root 的 `compaction-basic` 行、让每个 agent preset 自带引擎（dsh-tui 就是这样），所以插件读 `agent.ctx.compaction`、回退到 `ctx.compaction`。`minimal` preset 的会话没有引擎，此时 `compact_now` 明确拒绝并说明原因，而不是静默失败。
+- 引擎按会话解析：preset 型宿主会关掉 root 的 `compaction-basic` 行，把每个 preset 的引擎挂在**隔离的 entry group** 里，所以插件经 `ctx.agentPresets.serviceFor(agent, 'compaction')` 取，再退到 agent ctx、最后 root。`minimal` preset 的会话没有引擎，此时 `compact_now` 明确拒绝，并在回执里说明三个探针哪个是空的。
 - headless 单次任务：回合结束后宿主很快拆上下文，压缩可能落成 `abandoned:context-disposed`；TUI / web 长驻会话不受影响。
 - 一次压缩 5–15 秒（取决于窗口与路由），期间 agent 是 idle 的。
 - 看不到键盘：插件只在 agent idle 时执行，但仍可能刚好在你开始打字时落刀。期间你提交了真消息，续跑会被丢弃（压缩本身照常完成）。

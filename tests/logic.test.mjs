@@ -380,6 +380,39 @@ test('the inject guard on service properties does not block engine resolution', 
   assert.match(reply, /compact_now: scheduled/, 'the engine is found through ctx.get even though the property throws');
 });
 
+test('the engine is read from the agent preset group through the registry', async () => {
+  // Preset rows mount into an isolated entry group: neither the root nor the
+  // agent context can see `compaction`; `agentPresets.serviceFor` is the way in.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'self-compact-presetgroup-'));
+  const tools = [];
+  let calls = 0;
+  const engine = { async compactNow() { calls += 1; return { shadowedTokenCount: 42 }; } };
+  const registry = {
+    serviceFor(agent, name) {
+      return name === 'compaction' ? engine : undefined;
+    },
+  };
+  const ctx = {
+    logger: { info() {}, warn() {} },
+    effect: (fn) => { fn(); return () => {}; },
+    tools: { register(tool) { tools.push(tool); return () => {}; } },
+    tokenMeter: { contextPressure: () => ({ pressureTokens: 520_000, contextWindow: 1_000_000 }) },
+    get(name) {
+      if (name === 'agentPresets') return registry;
+      throw new Error(`no service ${name}`);
+    },
+    on() { return () => {}; },
+  };
+  apply(ctx, { debounceMs: 0, retryDelayMs: 0, idlePollMs: 0, handoffDir: dir, logPath: path.join(dir, 'log.jsonl') });
+  const tool = toolByName(tools, 'compact_now');
+  const agent = fakeAgent({ id: 'preset-group', ctx: { get() { throw new Error('no service compaction'); } } });
+  const reply = await tool.execute({ node: 'node', next_step: 'step' }, { agent, signal: new AbortController().signal });
+  assert.match(reply, /compact_now: scheduled/);
+  agent.status = 'idle';
+  await settle();
+  assert.equal(calls, 1, 'the preset-group engine ran');
+});
+
 test('a session without any engine is denied with a named reason', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'self-compact-noengine-'));
   const { ctx, tools } = fakeHost({ used: 520_000, rootEngine: false });
