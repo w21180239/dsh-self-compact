@@ -17,7 +17,7 @@ Every record carries `ts` (ISO 8601) except where noted, and every record about 
 | `skipped:no-range` | `compactNow()` returned `null` | `reason`, `durationMs` |
 | `denied:<reason>` | the gate refused the call | `pct`; `<reason>` is `below-floor` or `disabled` |
 | `failed:<code>` | retries exhausted | `reason` (first 400 characters), `durationMs` |
-| `abandoned:<reason>` | the plugin stopped waiting | `reason`; `<reason>` is `context-disposed` or `agent-busy` |
+| `abandoned:<reason>` | the plugin stopped waiting | `reason`; `<reason>` is `context-disposed`, `agent-busy` or `no-engine` |
 
 `pct`, `beforePct`, `afterPct` are percentages with one decimal (`52.3`), not fractions.
 
