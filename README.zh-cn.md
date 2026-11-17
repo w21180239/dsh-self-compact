@@ -186,7 +186,7 @@ dsh plugin --profile <名字> remove dsh-self-compact
 ## 开发
 
 ```sh
-npm test     # node --import ./tests/register.mjs --test tests/
+npm test     # node --import ./tests/register.mjs --test tests/logic.test.mjs
 ```
 
 16 项离线测试驱动真实插件入口（`tests/loader.mjs` 把两个宿主包换成桩），覆盖门槛、交接渲染、排队→压缩→续跑、用户抢话、检查点误判、`null` 结果、重试上限、提醒分带、回读率。

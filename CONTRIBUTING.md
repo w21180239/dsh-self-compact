@@ -5,7 +5,7 @@ Thanks for looking at this. The plugin is small on purpose: one tool, one after-
 ## Before you open a pull request
 
 ```sh
-npm test     # node --import ./tests/register.mjs --test tests/
+npm test     # node --import ./tests/register.mjs --test tests/logic.test.mjs
 ```
 
 Every change that touches `lib/` needs a test that fails without it. The suite runs on plain Node 22+ — no Harness install, no network — because `tests/loader.mjs` redirects the two host imports to stubs. If your change needs another host seam, extend the fake host in `tests/logic.test.mjs` rather than adding a dependency.
