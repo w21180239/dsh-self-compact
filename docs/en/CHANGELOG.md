@@ -2,11 +2,17 @@
 
 All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [0.1.3] — 2026-11-17
+
+### Fixed
+
+- A live `compact_now` call failed with `cannot get property "compaction" without inject`. cordis guards service property access from contexts that did not declare the service, and the engine lookup evaluated `ctx.compaction` before entering its try block. The lookup now uses `ctx.get('compaction')`, the ungated service lookup, and keeps the property accessor as a fallback behind its own try. Regression test added.
+
 ## [0.1.2] — 2026-11-17
 
 ### Fixed
 
-- The bundle never activated on any preset-based profile. `compaction` was a declared injection, but preset hosts disable the root `compaction-basic` row and mount the engine inside each agent's own realm, so the service never appeared at the root and the row waited forever — the tool was simply absent with no error. The engine is now resolved per session from `agent.ctx.compaction`, falling back to `ctx.compaction` for root-mounted hosts.
+- The bundle never activated on any preset-based profile. `compaction` was a declared injection, but preset hosts disable the root `compaction-basic` row and mount the engine inside each agent's own realm, so the service never appeared at the root and the row waited forever — the tool was simply absent with no error. The engine is now resolved per session from the agent context first, falling back to the root for root-mounted hosts.
 - A session whose preset carries no engine (`minimal`) now gets an explicit `compact_now denied: this session has no compaction engine` reply and an `abandoned:no-engine` log record, instead of a request that would silently never run.
 
 ## [0.1.1] — 2026-11-17
