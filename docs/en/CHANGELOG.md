@@ -15,6 +15,11 @@ All notable changes are recorded here. The format follows [Keep a Changelog](htt
 - `done` / `drop` / `lessons` stay file-only by design; repeating stale conclusions as current state costs more than it recovers.
 - Ready for publication: dual MIT/Apache-2.0 licence, bilingual README, design notes, log-format reference, CI, contributor and agent guidance.
 
+### Docs
+
+- The comparison now names `dsh-clear-mind` and `dsh-agent-compact`: both are model-initiated and model-written, which is closer to this plugin than the threshold-driven neighbours the first draft listed. The trade-off between the two routes (model writes the summary in-turn vs. host summarizer plus verbatim continuation) is stated instead of being implied.
+- CI passes the test file explicitly; `node --test <dir>` fails under `--import` with `ERR_UNSUPPORTED_DIR_IMPORT` on a clean runner.
+
 ### Fixed
 
 - `finalizeWatch` threw when no watch existed for the session (`watches.get()` returned `undefined`). Found by the new reread test.

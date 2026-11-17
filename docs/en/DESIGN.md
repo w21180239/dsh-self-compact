@@ -126,6 +126,7 @@ The live path is verified separately on an isolated `DSH_HOME` with a headless p
 
 ## 10. Open questions
 
+- Should the plugin offer a span-selection mode, closer to `dsh-clear-mind` and `dsh-agent-compact`, where the model writes the summary itself and the extra summarizer request disappears? Their route is cheaper per compaction and needs no idle gap; this route keeps one code path and does not ask the model to condense a 200k-token span inside a tool call. The reread rate (§6) is what should decide: a high rate means the summarizer is the weak link, which argues for letting the model write; a low rate argues for leaving it alone.
 - Should the handoff be appended to the surface before compaction so the summarizer sees it as context? It would give Path B's benefit without the takeover, but the message would survive in the retained tail and duplicate the continuation. Cost: one duplicated block of text per compaction. Not measured yet.
 - Subagents: a delegated agent's context ends with it, but a long-running subagent could still benefit. Needs a policy for who owns the continuation.
 - Should `done` / `drop` / `lessons` be re-injected on the *second* compaction of the same session? They are currently file-only to avoid repeating stale conclusions as fact.

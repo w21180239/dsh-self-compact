@@ -158,6 +158,15 @@ dsh --profile <名字> --dump-config | Select-String self-compact
 
 它们解决的是不同层面，可以叠加：`live-compact` 收短的是块**内部**堆积的工具输出，本插件决定块在哪里结束、什么必须活下去。
 
+另外两个足够接近，值得点名，都不是随手排除的：
+
+| 插件 | 它做什么 | 本插件的差别 |
+|---|---|---|
+| [dsh-clear-mind](https://github.com/john-walks-slow/dsh-clear-mind) ★10 | `mind_map` + `clear_mind(start, end, notes)`：模型先看清自己的上下文表面，选一段区间，用它自己写的检查点替换，走宿主原生的压缩事务词汇；带阈值提醒 | 区间和**摘要都由模型自己写**，发生在回合内，所以没有摘要器调用、也不需要续跑。它的宿主 peer 范围锁在 `0.1.2-rc` 线，比本插件要求的 `0.2.2` 老 |
+| [dsh-agent-compact](https://github.com/MimicHunterZ/dsh-agent-compact) ★5 | `context_compact(startAnchor, endAnchor, summary)`，带锚点匹配、溢出归档，并用 `summarize()` 补丁让某一次调用直接返回模型写的文本 | 同样是"模型自己写摘要"，实现方式是打引擎补丁，而不是照原样用引擎 |
+
+差别是设计取舍，不是水平高低。它们的路线把输出 token 花在一次由模型自己写的大幅浓缩上，省掉额外摘要请求、也没有 idle 空档。本插件保留单一压缩代码路径，用可度量的窗口比例而不是模型对区间边界的感觉来做决定，也不依赖模型在一次工具调用里把 20 万 token 正确浓缩掉。
+
 ## 数据与隐私
 
 全部在 `~/.dsh/self-compact/`，不进仓库：

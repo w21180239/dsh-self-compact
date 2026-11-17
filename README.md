@@ -160,6 +160,15 @@ That ratio is the decision rule for whether the summarizer ever needs steering. 
 
 These solve different parts of the problem and can be combined: `live-compact` shrinks the tool output that accumulates *inside* a block, this plugin decides where a block ends and what must survive it.
 
+Two more are close enough to name, and neither is dismissed lightly:
+
+| Plugin | What it does | Where this plugin still differs |
+|---|---|---|
+| [dsh-clear-mind](https://github.com/john-walks-slow/dsh-clear-mind) ★10 | `mind_map` + `clear_mind(start, end, notes)`: the model inspects its own surface, picks a span, and replaces it with a checkpoint it wrote, through the host's own compaction transaction vocabulary; threshold reminders included | The model picks the span **and writes the summary**, in-turn, so there is no summarizer call and no continuation. Its host peer range is pinned to the `0.1.2-rc` line, older than the `0.2.2` this plugin targets |
+| [dsh-agent-compact](https://github.com/MimicHunterZ/dsh-agent-compact) ★5 | `context_compact(startAnchor, endAnchor, summary)` with anchor matching, a spill archive, and a `summarize()` patch that returns the agent's text for one call | Same "the model writes the summary" route, implemented by patching the engine rather than using it as-is |
+
+The difference is a design choice, not a quality ranking. Theirs spends output tokens on one big condensation the model writes itself, saves the extra summarizer request, and needs no idle gap. This one keeps a single compaction code path, decides on a measured window percentage rather than on the model's feel for span boundaries, and does not rely on the model condensing a 200k-token span correctly inside a tool call.
+
 ## Data and privacy
 
 Everything lives under `~/.dsh/self-compact/`, never inside a repository:
