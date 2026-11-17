@@ -42,7 +42,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --import ./tests/register.mjs --test tests/"
+    "test": "node --import ./tests/register.mjs --test tests/logic.test.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": ">=4.0.1 <5",

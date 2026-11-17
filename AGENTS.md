@@ -13,7 +13,7 @@ It does **not** own `ctx.compaction`. Never add code that disables the `compacti
 | Command | Purpose |
 |---|---|
 | `npm test` | 16 offline tests; the only gate that must pass before any change is claimed done |
-| `node --import ./tests/register.mjs --test tests/` | same thing, explicit loader |
+| `node --import ./tests/register.mjs --test tests/logic.test.mjs` | same thing, explicit loader |
 | `dsh --profile <p> --dump-config` (with `Select-String self-compact`) | confirm the bundle row composes |
 
 There is no build step and no linter. Do not add one: the package must stay installable as plain ESM.

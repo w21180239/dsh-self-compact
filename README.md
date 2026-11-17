@@ -188,7 +188,7 @@ then restart. Nothing else is touched; delete `~/.dsh/self-compact/` to drop the
 ## Development
 
 ```sh
-npm test     # node --import ./tests/register.mjs --test tests/
+npm test     # node --import ./tests/register.mjs --test tests/logic.test.mjs
 ```
 
 The 16 offline tests drive the real plugin entry against a fake host (`tests/loader.mjs` points the two host imports at stubs): the gate, handoff rendering, the queue → compaction → continuation path, user takeover, the checkpoint false positive, `null` results, retry limits, nudge bands, and the reread rate.

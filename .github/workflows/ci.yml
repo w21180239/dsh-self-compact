@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Offline logic tests
-        run: node --import ./tests/register.mjs --test tests/
+        run: node --import ./tests/register.mjs --test tests/logic.test.mjs
 
   package:
     runs-on: ubuntu-latest
