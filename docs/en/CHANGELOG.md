@@ -2,6 +2,12 @@
 
 All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [0.1.5] — 2026-11-17
+
+### Fixed
+
+- Post-compaction accounting read the wrong number. `tokenMeter.contextPressure()` is the last provider usage sample, and only a request reports usage, so right after a compaction it still answered the pre-compact size: the first live TUI compaction logged `30.3% -> 30.4%` with `dropped: 235938`. The gate now reads `tokenMeter.measure(session).totalTokens`, which replays the durable tail and reprices the current surface, falling back to the sample when `measure` is missing, throws, or returns zero. This also closes a re-fire hole: a second `compact_now` right after a compaction used to pass the floor against a context that was already small.
+
 ## [0.1.4] — 2026-11-17
 
 ### Fixed

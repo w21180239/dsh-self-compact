@@ -12,7 +12,7 @@ It does **not** own `ctx.compaction`. Never add code that disables the `compacti
 
 | Command | Purpose |
 |---|---|
-| `npm test` | 20 offline tests; the only gate that must pass before any change is claimed done |
+| `npm test` | 22 offline tests; the only gate that must pass before any change is claimed done |
 | `node --import ./tests/register.mjs --test tests/logic.test.mjs` | same thing, explicit loader |
 | `dsh --profile <p> --dump-config` (with `Select-String self-compact`) | confirm the bundle row composes |
 
@@ -27,7 +27,8 @@ Import only from these, and declare each one as an optional peer dependency in `
 | `@deepseek-ai/dsh-tools` → `defineTool` | registering `compact_now` |
 | `@deepseek-ai/dsh-llm` → `createUserMessage` | synthesizing the continuation and nudge messages |
 | `ctx.tools.register` | tool registration (inside `ctx.effect`) |
-| `ctx.tokenMeter.contextPressure(session)` | the gate's `{ pressureTokens, contextWindow }` |
+| `ctx.tokenMeter.contextPressure(session)` | the window, and the fallback prompt size |
+| `ctx.tokenMeter.measure(session).totalTokens` | the prompt size the next request carries; the sample above cannot see a compaction |
 | `ctx.agentPresets.serviceFor(agent, 'compaction')`, then `agent.ctx`, then root `ctx.get('compaction')` | the host's own compaction. Never inject `compaction`: preset hosts mount the engine in an isolated entry group, so the root never has it and the row would wait forever |
 | `ctx.on('agent/status')` | idle boundary — the primary trigger |
 | `ctx.on('tools/result')` | reread observation (emit mode; cannot alter dispatch) |
