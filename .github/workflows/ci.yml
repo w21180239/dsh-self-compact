@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Offline logic tests
+        run: node --import ./tests/register.mjs --test tests/
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Manifest sanity
+        run: |
+          node -e "const p=require('./package.json');
+          const fail=(m)=>{console.error(m);process.exit(1)};
+          if(!p.dsh?.bundle?.patch)fail('missing dsh.bundle.patch');
+          const fs=require('fs');
+          if(!fs.existsSync(p.dsh.bundle.patch))fail('patch file does not exist');
+          for(const f of ['lib/index.js','cordis.patch.yml','README.md','README.zh-cn.md','LICENSE-MIT','LICENSE-APACHE','docs/en/DESIGN.md','docs/zh-cn/DESIGN.md'])if(!fs.existsSync(f))fail('missing '+f);
+          console.log('manifest ok');"
+      - name: Non-ASCII scan of manifest and config
+        run: |
+          # Manifest and config stay ASCII. lib/index.js legitimately carries the
+          # Chinese tool text used when `language: zh`; prose files are Chinese.
+          ! grep -Pn '[^\x00-\x7F]' cordis.patch.yml package.json .github/workflows/ci.yml
