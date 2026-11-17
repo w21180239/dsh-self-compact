@@ -71,6 +71,8 @@ floor       = max(floorPct × 窗口, baseline + retainK + minSavingK)
 
 默认 0.30 / 100k / 65k / 20k。Claude 版用 10% 下限，是因为那边一次压缩在 $15/M 输入价下是真花钱。DeepSeek 系路由上绝对成本不是约束，无意义的前缀改写和细节丢失才是。回本算术见 README 阈值表。
 
+`used` 是**下一次请求**会带的 prompt 量，它和计量器免费给的那个数不是一回事。`tokenMeter.contextPressure()` 返回的是最后一次 provider 采样；只有请求会上报 usage，所以它看不见压缩，模型下一次回话之前一直报压缩前的体积。`tokenMeter.measure(session).totalTokens` 重放持久尾部并重算当前 surface，因此能看到被遮蔽的那段消失。门槛优先用它，采样只作兜底（计量器没有 `measure`、调用抛错、或结果为 0）。没有这一层，TUI 首次真实压缩在丢掉 235,938 token 后记成了 `30.3% -> 30.4%`，而在那个窗口里第二次 `compact_now` 会被放行，尽管上下文其实只剩 3%。
+
 ## 5. 提醒
 
 `agent/pre-step` 是带 `prepend: true` 的 waterfall，提醒以一条合成 user 消息追加到本次组装的请求里。规则：

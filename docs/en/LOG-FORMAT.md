@@ -21,6 +21,8 @@ Every record carries `ts` (ISO 8601) except where noted, and every record about 
 
 `pct`, `beforePct`, `afterPct` are percentages with one decimal (`52.3`), not fractions.
 
+`afterPct` is measured from the replayed session tail, so it is the prompt the next request carries. From 0.1.5 that is literally true; earlier versions read the provider's last usage sample, which cannot see a compaction and reported the pre-compact size (`30.3 -> 30.4` after dropping 235,938 tokens).
+
 ## Example
 
 ```json

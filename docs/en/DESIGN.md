@@ -74,6 +74,8 @@ accept      = used ≥ floor
 
 `floor` is a single rule that carries both intents: "not absurdly early" (the fraction) and "worth the rewrite" (the absolute saving). An earlier revision checked the saving separately, which was unreachable — the floor's second term already guarantees it — so the check and its denial code were removed rather than left as dead branches.
 
+`used` is the prompt size the *next* request would carry, which is not the same thing the meter hands out for free. `tokenMeter.contextPressure()` returns the last provider sample; nothing but a request reports usage, so it cannot observe a compaction and keeps answering the pre-compact size until the model replies again. `tokenMeter.measure(session).totalTokens` replays the durable tail and reprices the current surface, so it sees the shadowed region disappear. The gate prefers it and keeps the sample as the fallback (a meter without `measure`, a throwing call, or a zero result). Without this, the first live TUI compaction logged `30.3% -> 30.4%` after dropping 235,938 tokens, and a second `compact_now` in that window would have been accepted against a context that was already 3% full.
+
 Defaults are 0.30 / 100k / 65k / 20k. The Claude-side plugin used a 10% floor because a compaction there costs real money at ~$15/M input. On DeepSeek-class routes the absolute cost is not the constraint; pointless prefix rewrites and lost detail are. See the README threshold table for the break-even arithmetic.
 
 ## 5. Nudges

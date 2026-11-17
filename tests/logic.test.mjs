@@ -126,6 +126,29 @@ test('disabled configuration denies even a large context', () => {
   assert.equal(evaluate(measurement, config, 'en').reason, 'disabled');
 });
 
+test('the exact measurement outranks the stale pressure sample', () => {
+  // A fresh compaction leaves pressureTokens on the pre-compact sample; the
+  // replayed measurement is what the next request really carries.
+  const config = resolveConfig({});
+  const meter = {
+    contextPressure: () => ({ pressureTokens: 303_035, contextWindow: 1_000_000 }),
+    measure: () => ({ totalTokens: 34_120 }),
+  };
+  const measurement = measure(meter, {}, config);
+  assert.equal(measurement.used, 34_120);
+  assert.equal(evaluate(measurement, config, 'en').reason, 'below-floor');
+});
+
+test('a meter without measure, or one that throws, falls back to the sample', () => {
+  const config = resolveConfig({});
+  const sampled = { contextPressure: () => ({ pressureTokens: 420_000, contextWindow: 1_000_000 }) };
+  assert.equal(measure(sampled, {}, config).used, 420_000);
+  const failing = { ...sampled, measure: () => { throw new Error('inactive context'); } };
+  assert.equal(measure(failing, {}, config).used, 420_000);
+  const empty = { ...sampled, measure: () => ({ totalTokens: 0 }) };
+  assert.equal(measure(empty, {}, config).used, 420_000);
+});
+
 test('nudge bands open at the configured start and grow by one step', () => {
   const config = resolveConfig({ nudgeStartPct: 0.4, nudgeStepPct: 0.1 });
   const at = (pct) => nudgeBand({ pct }, config);
