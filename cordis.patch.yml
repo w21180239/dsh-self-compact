@@ -1,0 +1,20 @@
+# Bundle patch for dsh-self-compact.
+#
+# It does NOT replace the compaction engine: the stock
+# `@deepseek-ai/dsh-compaction-basic` row keeps running and keeps owning
+# `ctx.compaction`. This row only adds one model-facing tool plus the
+# after-turn trigger that calls the native `compactNow()` seam.
+#
+# Optional keys (all optional; defaults shown):
+# - floorPct: 0.30          hard floor, fraction of the context window
+# - minSavingK: 100         floor is also at least baseline + 20k + this many k
+# - nudgeStartPct: 0.40     first nudge, raised to floorPct when lower
+# - nudgeStepPct: 0.10      gap between nudges
+# - urgentPct: 0.55         escalated nudge wording
+# - continuation: true      submit a continuation prompt after compaction
+# - enabled: true           false keeps the tool registered but denies every call
+- insert:
+    - id: self-compact
+      name: dsh-self-compact
+      config:
+        enabled: true
