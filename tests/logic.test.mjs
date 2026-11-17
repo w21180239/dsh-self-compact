@@ -348,6 +348,38 @@ test('a preset-scoped engine is used when the root has none', async () => {
   assert.equal(agent.followups.length, 1);
 });
 
+test('the inject guard on service properties does not block engine resolution', async () => {
+  // cordis throws `cannot get property "compaction" without inject` on property
+  // access from a context that did not declare it; `ctx.get()` is not gated.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'self-compact-guard-'));
+  const tools = [];
+  const engine = { async compactNow() { return { shadowedTokenCount: 7 }; } };
+  const guarded = {
+    get(name) {
+      if (name === 'compaction') return engine;
+      throw new Error(`no service ${name}`);
+    },
+    get compaction() {
+      throw new Error('cannot get property "compaction" without inject');
+    },
+  };
+  const ctx = {
+    logger: { info() {}, warn() {} },
+    effect: (fn) => { fn(); return () => {}; },
+    tools: { register(tool) { tools.push(tool); return () => {}; } },
+    tokenMeter: { contextPressure: () => ({ pressureTokens: 520_000, contextWindow: 1_000_000 }) },
+    get compaction() {
+      throw new Error('cannot get property "compaction" without inject');
+    },
+    on() { return () => {}; },
+  };
+  apply(ctx, { debounceMs: 0, retryDelayMs: 0, idlePollMs: 0, handoffDir: dir, logPath: path.join(dir, 'log.jsonl') });
+  const tool = toolByName(tools, 'compact_now');
+  const agent = fakeAgent({ id: 'guarded', ctx: guarded });
+  const reply = await tool.execute({ node: 'node', next_step: 'step' }, { agent, signal: new AbortController().signal });
+  assert.match(reply, /compact_now: scheduled/, 'the engine is found through ctx.get even though the property throws');
+});
+
 test('a session without any engine is denied with a named reason', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'self-compact-noengine-'));
   const { ctx, tools } = fakeHost({ used: 520_000, rootEngine: false });
