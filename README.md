@@ -182,6 +182,7 @@ The plugin makes no network calls of its own; the compaction summary is produced
 
 - The summary body is written by the host summarizer and this plugin does not steer its prompt. Steering it means disabling the `compaction-basic` row, subclassing `CompactionEngine`, and mirroring its whole configuration — see [Design](docs/en/DESIGN.md) for why that trade is deferred rather than rejected.
 - Main session only: a subagent's context ends with the subagent, so compacting it buys nothing.
+- The engine is resolved per session. Preset-based hosts disable the root `compaction-basic` row and let each agent preset carry its own engine (dsh-tui does this), so the plugin reads `agent.ctx.compaction` and falls back to `ctx.compaction`. A session on the `minimal` preset has no engine at all; `compact_now` then refuses with a named reason instead of failing silently.
 - Headless one-shot runs tear the context down right after the turn; a compaction can land as `abandoned:context-disposed`. Long-lived TUI and web sessions are unaffected.
 - A compaction takes roughly 5–15 seconds depending on window size and route, and the agent is idle throughout.
 - No keystroke awareness: the plugin runs only when the agent is idle, but a compaction can still land right as you start typing. A real user message submitted in the meantime drops the continuation (the compaction itself still runs).

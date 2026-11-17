@@ -2,6 +2,13 @@
 
 All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [0.1.2] — 2026-11-17
+
+### Fixed
+
+- The bundle never activated on any preset-based profile. `compaction` was a declared injection, but preset hosts disable the root `compaction-basic` row and mount the engine inside each agent's own realm, so the service never appeared at the root and the row waited forever — the tool was simply absent with no error. The engine is now resolved per session from `agent.ctx.compaction`, falling back to `ctx.compaction` for root-mounted hosts.
+- A session whose preset carries no engine (`minimal`) now gets an explicit `compact_now denied: this session has no compaction engine` reply and an `abandoned:no-engine` log record, instead of a request that would silently never run.
+
 ## [0.1.1] — 2026-11-17
 
 ### Added

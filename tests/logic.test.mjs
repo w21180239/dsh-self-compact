@@ -43,7 +43,7 @@ function fakeHost(options = {}) {
       },
     },
     tokenMeter: { contextPressure: () => ({ pressureTokens: used, contextWindow: window }) },
-    compaction: { compactNow: options.compact ?? (async () => null) },
+    ...(options.rootEngine === false ? {} : { compaction: { compactNow: options.compact ?? (async () => null) } }),
     on(event, handler, opts) {
       listeners.push({ event, handler, opts });
       return () => {};
@@ -62,6 +62,7 @@ function fakeAgent(options) {
     id: options.id,
     status: options.status ?? 'running',
     followups: [],
+    ctx: options.ctx,
     session: {
       id: options.id,
       snapshotEvents: () => options.events ?? [],
@@ -321,6 +322,42 @@ test('a post-compaction reread of the handoff is counted and reported as a rate'
   const rate = log.find((entry) => entry.result === 'reread-rate');
   assert.equal(rate?.calls, 2);
   assert.equal(rate?.rereads, 1);
+});
+
+test('a preset-scoped engine is used when the root has none', async () => {
+  // dsh-tui disables the root compaction row and lets each agent preset carry
+  // its own engine, so the plugin must read `agent.ctx.compaction`.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'self-compact-preset-'));
+  let calls = 0;
+  const { ctx, tools } = fakeHost({ used: 520_000, rootEngine: false });
+  apply(ctx, { debounceMs: 0, retryDelayMs: 0, idlePollMs: 0, handoffDir: dir, logPath: path.join(dir, 'log.jsonl') });
+  const tool = toolByName(tools, 'compact_now');
+  const engine = {
+    async compactNow() {
+      calls += 1;
+      return { shadowedTokenCount: 123 };
+    },
+  };
+  const agent = fakeAgent({ id: 'preset-engine', ctx: { compaction: engine } });
+
+  const reply = await tool.execute({ node: 'node', next_step: 'step' }, { agent, signal: new AbortController().signal });
+  assert.match(reply, /compact_now: scheduled/);
+  agent.status = 'idle';
+  await settle();
+  assert.equal(calls, 1);
+  assert.equal(agent.followups.length, 1);
+});
+
+test('a session without any engine is denied with a named reason', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'self-compact-noengine-'));
+  const { ctx, tools } = fakeHost({ used: 520_000, rootEngine: false });
+  apply(ctx, { debounceMs: 0, handoffDir: dir, logPath: path.join(dir, 'log.jsonl') });
+  const tool = toolByName(tools, 'compact_now');
+  const agent = fakeAgent({ id: 'no-engine' });
+  const reply = await tool.execute({ node: 'node', next_step: 'step' }, { agent, signal: new AbortController().signal });
+  assert.match(reply, /no compaction engine/);
+  await settle();
+  assert.equal(agent.followups.length, 0);
 });
 
 test('the pre-step nudge fires once per band and never below the start', async () => {
