@@ -2,6 +2,12 @@
 
 All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [0.1.4] — 2026-11-17
+
+### Fixed
+
+- The engine is still not reachable from the agent context on a preset-based host: preset rows mount into an **isolated entry group**, so `compaction` lives in neither the root nor the agent scope (`agent ctx: present, root: missing` from the live probe). The engine is now read through the documented registry seam, `ctx.agentPresets.serviceFor(agent, 'compaction')`, with the agent context and the root kept as fallbacks. The denial text reports all three probes.
+
 ## [0.1.3] — 2026-11-17
 
 ### Fixed

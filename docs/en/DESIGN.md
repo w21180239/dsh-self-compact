@@ -22,7 +22,7 @@ abstract compactNow(
 
 There is no instructions parameter, and `BasicCompactionEngine.summarize()` — the documented subclass hook — builds its own trailing instruction after replaying the conversation prefix. `/compact` itself takes no arguments (`dsh-command-compact` refuses `rawInput.trim().length > 0`).
 
-A second placement detail matters more than it looks: the engine is not always at the root. Preset-based hosts (`dsh-tui`) disable the root `compaction-basic` row and let each agent preset carry its own engine in an isolate realm, while `headless` and `web` keep it at the root. The plugin therefore never injects `compaction` — a missing root service leaves the row waiting forever and the tool silently absent — and resolves the engine per session from `agent.ctx.compaction`, falling back to `ctx.compaction`.
+A second placement detail matters more than it looks, and it cost three host restarts to get right. The engine is not always at the root: preset-based hosts (`dsh-tui`) disable the root `compaction-basic` row and mount each preset's rows into an **isolated entry group**. A service in an isolated group is visible neither from the root nor from the agent context — the live probe answered `agent ctx: present, root: missing` — so the documented way in is the registry: `ctx.agentPresets.serviceFor(agent, 'compaction')`. The plugin therefore never injects `compaction` (a missing root service leaves the row waiting forever and the tool silently absent) and resolves the engine as preset group → agent context → root, reporting all three probes when a session has none.
 
 So there are exactly two ways to make the model's words reach the summarizer:
 | Path | Cost | What it buys |
