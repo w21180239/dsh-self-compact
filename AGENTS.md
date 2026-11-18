@@ -12,7 +12,7 @@ It does **not** own `ctx.compaction`. Never add code that disables the `compacti
 
 | Command | Purpose |
 |---|---|
-| `npm test` | 34 offline tests; the only gate that must pass before any change is claimed done |
+| `npm test` | 35 offline tests; the only gate that must pass before any change is claimed done |
 | `node --import ./tests/register.mjs --test tests/logic.test.mjs` | same thing, explicit loader |
 | `dsh --profile <p> --dump-config` (with `Select-String self-compact`) | confirm the bundle row composes |
 

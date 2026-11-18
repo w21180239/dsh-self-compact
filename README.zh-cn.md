@@ -92,7 +92,7 @@ dsh --profile <名字> --dump-config | Select-String self-compact
 `autoNodes` 开着（默认）时，插件会在合适的时刻提示模型。每条提示都写明：大小档位只是必要条件；三条同时满足模型才压——当前块已收尾、接下来的工作不依赖上下文里的大段原文、剩余工作够长能把这次压缩回本。所有触发都要求上下文达到下限、是主会话、宿主是交互式、且没有已排队的请求。
 
 - **节点标记。** 工具调用会被归类为节点。强信号：`git push` / `merge` / `tag`，PR 或 MR 创建 / 评审 / 合并，`gh issue comment` / `close`，对外的 `gog` / `agent-slack` / `slack` / `outlook` 发送，写入 spec/plan 文件或 `handoff*` 文件，全部完成的 `todo_write`。弱信号：`git commit`、通过的测试命令、新建的 `.md`、返回的 `subagent` / `wait_agent`。标记搭在下一步上，每轮一次；弱信号只在 node 档及以上才算。
-- **轮末自检**（`turnEndCheck`）。agent 进入 idle 时发一条提示，请模型压缩或回答 `skip: <理由>`。触发条件：出现节点之后；一轮里工具调用两次以上且上下文在 work 档；或在 node 档停留了很久。同一种触发每涨 5 个百分点最多一次，中间没有工具活动不会连发，`ask_user_question` 之后也不发。模型的 `skip:` 理由会写进日志。
+- **轮末自检**（`turnEndCheck`）。agent 进入 idle 时发一条提示，请模型压缩或回答 `skip: <理由>`。触发条件：出现节点之后；一轮里工具调用两次以上且上下文在 work 档；或在 node 档停留了很久。同一种触发每涨 5 个百分点最多一次，中间没有工具活动不会连发（自检那一轮里的调用不算），`ask_user_question` 之后也不发。回答 `skip:` 后，两种只看大小的触发也要等上下文再涨 5 个百分点。模型的 `skip:` 理由会写进日志。
 - **新块提示。** 下限一过，每条用户输入都带一行提示，让新块有机会从干净上下文起步。
 - **提醒。** 从 node 档起，每隔 `nudgeStepPct`（窗口的 5%）重复提醒一次；越过 urgent 档立即升级措辞：在下一个安全步骤就压，别等窗口打满。
 
@@ -255,7 +255,7 @@ dsh plugin --profile <名字> remove dsh-self-compact
 npm test     # node --import ./tests/register.mjs --test tests/logic.test.mjs
 ```
 
-34 项离线测试驱动真实插件入口（`tests/loader.mjs` 把两个宿主包换成桩），覆盖回本档位与 P 的学习、门槛、交接渲染、语言约定、排队→压缩→续跑、用户抢话、检查点误判、`null` 结果、重试上限、提醒、节点识别与轮末自检、过期请求、skill 工作集、子代理、压缩后计量、回读率。
+35 项离线测试驱动真实插件入口（`tests/loader.mjs` 把两个宿主包换成桩），覆盖回本档位与 P 的学习、门槛、交接渲染、语言约定、排队→压缩→续跑、用户抢话、检查点误判、`null` 结果、重试上限、提醒、节点识别与轮末自检、过期请求、skill 工作集、子代理、压缩后计量、回读率。
 
 0.1 版在隔离 `DSH_HOME` + headless profile 上的真机实测：
 
