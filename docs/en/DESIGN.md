@@ -127,7 +127,7 @@ The size tier is a necessary condition. Judging whether the block is closed stay
 
 ### 5.2 Language rules
 
-A compaction drops the chat language and the output conventions first, so they travel on their own. `compact_now` takes an optional `language: {chat, outputs[]}`. Per sub-field the given value wins, then the previous compaction's; `chat` falls back to the language detected from the user's last 5 messages (a CJK share of at least 0.3 of the non-space characters reads as Chinese). The result leads the handoff file, opens the continuation, and repeats as a line on the next 3 human turns. After a compaction the first assistant answer is classified; a mismatch with the chat rule is logged once as `lang-drift`. `langSource` on `queued` and `done` records which of the three supplied the value.
+A compaction drops the chat language and the output conventions first, so they travel on their own. `compact_now` takes an optional `language: {chat, outputs[]}`. Per sub-field the given value wins, then the previous compaction's; `chat` falls back to the language detected from the user's last 5 messages (with code, URLs and paths removed, at least as many CJK characters as Latin words reads as Chinese, so a Chinese answer full of identifiers stays Chinese). The result leads the handoff file, opens the continuation, and repeats as a line on the next 3 human turns. After a compaction the first assistant answer is classified; a mismatch with the chat rule is logged once as `lang-drift`. `langSource` on `queued` and `done` records which of the three supplied the value.
 
 ### 5.3 Skill working set
 

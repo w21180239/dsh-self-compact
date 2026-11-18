@@ -15,7 +15,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { apply, isSubagent } from '../lib/index.js';
 import { breakEven, evaluate, learnP, measure, nudgeLevel, pickP, thresholds } from '../lib/gate.js';
-import { buildContinuation, chatClass, langLine, mergeLanguage, normalizeHandoff, parseSkipReason, renderHandoff } from '../lib/handoff.js';
+import { buildContinuation, chatClass, dominantLang, langLine, mergeLanguage, normalizeHandoff, parseSkipReason, renderHandoff } from '../lib/handoff.js';
 import { resolveConfig } from '../lib/config.js';
 import { detectNode, tierSkills, touchedPaths } from '../lib/triggers.js';
 import { loadProfile } from '../lib/profile.js';
@@ -214,6 +214,22 @@ test('the continuation caps decisions, artifacts and pending', () => {
   assert.match(continuation, /… 4 more in the handoff file/);
   assert.match(continuation, /… 6 more in the handoff file/);
   assert.ok(!continuation.includes('x'.repeat(500)));
+});
+
+test('language detection ignores code, paths and URLs', () => {
+  // Shape of the live answer that was logged as lang-drift: Chinese prose, an identifier-heavy table.
+  const answer = [
+    '7 个模块笔记写完，`notes/` 下每个 `lib/*.js` 一份，正文中文、文件名英文：',
+    '| 文件 | 对应模块 | 导出数 |',
+    '|---|---|---|',
+    '| `notes/index.md` | `lib/index.js` | 9（`name`、`inject`、`apply`、`STALE_AFTER_CALLS`） |',
+    '| `notes/handoff.md` | `lib/handoff.js` | 14（`normalizeHandoff`、`renderHandoff`、`buildContinuation`） |',
+    '| `notes/gate.md` | `lib/gate.js` | 9（`measure`、`breakEven`、`thresholds`、`evaluate`） |',
+  ].join('\n');
+  assert.equal(dominantLang(answer), 'zh');
+  assert.equal(dominantLang('The tests pass and the PR is open at https://github.com/x/y/pull/1.'), 'en');
+  assert.equal(dominantLang('Done. The user wrote 请用中文 in the notes file.'), 'en');
+  assert.equal(dominantLang('`lib/index.js`'), undefined);
 });
 
 test('language rules: given wins, then inherited, then detected; the line leads the continuation', () => {
