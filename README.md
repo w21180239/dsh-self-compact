@@ -153,7 +153,7 @@ On a 1M window:
 
 On a 200k window with P = 90k, node, work and urgent all sit at 160k (80%).
 
-**P is learned.** It is measured right after each compaction (`tokenMeter.measure()` replays the new tail) and folded into an exponentially weighted average (EWMA) per project and globally in `~/.dsh/self-compact/profile.json`; outliers are damped and three same-side outliers reset the estimate. Because several dsh processes share the file, writes run under a lock directory and land by atomic rename. The plugin plans with the first source that exists: this session's latest sample, the project estimate, the global estimate (project and global need 3 samples), then the session's first measured size + 25k (65k + 25k = 90k when nothing was measured yet). The tool description names the tiers in tokens for the learned P; it is rendered once per process, so the prompt cache holds.
+**P is learned.** It is measured right after each compaction (`tokenMeter.measure()` replays the new tail) and folded into an exponentially weighted average (EWMA) per project and globally in `~/.dsh/self-compact/profile.json`; outliers are damped and three same-side outliers reset the estimate. Because several dsh processes share the file, writes run under a lock directory and land by atomic rename. The plugin plans with the first source that exists: this session's latest sample, the project estimate, the global estimate (project and global need 3 samples), then the session's first non-zero measured size + 25k (65k + 25k = 90k when nothing was measured yet). The tool description names the tiers in tokens for the learned P; it is rendered once per process, so the prompt cache holds.
 
 When the harness itself is so large that `C(workCalls)` reaches `urgentK`, compaction barely pays; the model gets a one-time note to compact at big phase handoffs only.
 
@@ -257,7 +257,7 @@ then restart. Nothing else is touched; delete `~/.dsh/self-compact/` to drop the
 npm test     # node --import ./tests/register.mjs --test tests/logic.test.mjs
 ```
 
-The 33 offline tests drive the real plugin entry against a fake host (`tests/loader.mjs` points the two host imports at stubs): the break-even tiers and P learning, the gate, handoff rendering, language rules, the queue → compaction → continuation path, user takeover, the checkpoint false positive, `null` results, retry limits, nudges, node detection and the turn-end self-check, stale requests, the skill working set, subagents, post-compaction accounting, and the reread rate.
+The 34 offline tests drive the real plugin entry against a fake host (`tests/loader.mjs` points the two host imports at stubs): the break-even tiers and P learning, the gate, handoff rendering, language rules, the queue → compaction → continuation path, user takeover, the checkpoint false positive, `null` results, retry limits, nudges, node detection and the turn-end self-check, stale requests, the skill working set, subagents, post-compaction accounting, and the reread rate.
 
 A live check of the 0.1 line on an isolated `DSH_HOME` + headless profile produced:
 
