@@ -4,7 +4,7 @@ Notes for coding agents working in this repository. Human contributors: `CONTRIB
 
 ## What this package is
 
-A DeepSeek Harness plugin bundle. `lib/index.js` is the entire lifecycle (tool registration, idle trigger, compaction call, continuation, nudge, watch). `lib/gate.js`, `lib/handoff.js` and `lib/config.js` are pure functions with tests.
+A DeepSeek Harness plugin bundle. `lib/index.js` is the entire lifecycle (tool registration, idle trigger, compaction call, continuation, nudges, node flags, turn-end self-check, skill tracking, watch). `lib/gate.js`, `lib/handoff.js`, `lib/triggers.js` and `lib/config.js` are pure functions with tests; `lib/profile.js` owns the locked `profile.json`; `lib/strings.js` holds every model-facing line (en, zh).
 
 It does **not** own `ctx.compaction`. Never add code that disables the `compaction-basic` row; see `docs/en/DESIGN.md` §2 for the condition that would change this.
 
@@ -12,7 +12,7 @@ It does **not** own `ctx.compaction`. Never add code that disables the `compacti
 
 | Command | Purpose |
 |---|---|
-| `npm test` | 22 offline tests; the only gate that must pass before any change is claimed done |
+| `npm test` | 33 offline tests; the only gate that must pass before any change is claimed done |
 | `node --import ./tests/register.mjs --test tests/logic.test.mjs` | same thing, explicit loader |
 | `dsh --profile <p> --dump-config` (with `Select-String self-compact`) | confirm the bundle row composes |
 
@@ -31,10 +31,12 @@ Import only from these, and declare each one as an optional peer dependency in `
 | `ctx.tokenMeter.measure(session).totalTokens` | the prompt size the next request carries; the sample above cannot see a compaction |
 | `ctx.agentPresets.serviceFor(agent, 'compaction')`, then `agent.ctx`, then root `ctx.get('compaction')` | the host's own compaction. Never inject `compaction`: preset hosts mount the engine in an isolated entry group, so the root never has it and the row would wait forever |
 | `ctx.on('agent/status')` | idle boundary — the primary trigger |
-| `ctx.on('tools/result')` | reread observation (emit mode; cannot alter dispatch) |
-| `ctx.on('agent/pre-step', …, { prepend: true })` | banded nudge injection |
-| `agent.followup(message)` | continuation prompt |
-| `agent.session.snapshotEvents()` | detecting a real user message after queueing |
+| `ctx.on('tools/result', (exec, result))` | staleness, node signals, skill tracking, reread observation (emit mode; cannot alter dispatch). Arguments are `exec.arguments`, the error flag `result.isError` |
+| `ctx.on('agent/pre-step', …, { prepend: true })` | turn start (`payload.step === 1`, human when a message has `source.kind === 'user'`) and every model-facing line: nudges, node flags, block-start hint, language line |
+| `agent.followup(message)` | continuation and self-check prompts (wakes an idle agent into a new turn) |
+| `agent.session.snapshotEvents()` | real user messages (after queueing, the original request, the last 5) and the last assistant answer |
+| `agent.session.header` | `origin === 'subagent'` / `delegationDepth` for subagents, `cwd` as the profile project key |
+| `ctx.get()` for `headlessStartup`, `sdkAppStartup`, `acpAppStartup` | non-interactive session: no triggers |
 
 ## Invariants
 
