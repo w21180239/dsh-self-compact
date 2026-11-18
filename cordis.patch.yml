@@ -6,7 +6,7 @@
 # triggers, and the after-turn trigger that calls the native `compactNow()` seam.
 #
 # Optional keys (defaults shown). Tiers derive from the learned post-compact
-# size P through a break-even formula; see docs/en/DESIGN.md §4.
+# size P through a break-even formula; see docs/en/DESIGN.md section 4.
 # - floorCalls: 20          floor = context that repays a compaction within N calls
 # - nodeCalls: 10           any clean node from here
 # - workCalls: 8            turn-end self-check after a block of work from here
