@@ -2,6 +2,12 @@
 
 All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [0.2.1] — 2026-11-18
+
+### Fixed
+
+- `LOG-FORMAT.md`: the example record no longer carries a real user's home path.
+
 ## [0.2.0] — 2026-11-18
 
 Ports the Claude-side plugin's 0.2–0.7 design to Harness.
