@@ -1,6 +1,6 @@
 {
   "name": "dsh-self-compact",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Agent-initiated compaction for DeepSeek Harness: the model picks the milestone, writes the handoff, native compaction runs after the turn, and work resumes by itself.",
   "type": "module",
   "main": "lib/index.js",

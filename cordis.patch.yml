@@ -2,16 +2,28 @@
 #
 # It does NOT replace the compaction engine: the stock
 # `@deepseek-ai/dsh-compaction-basic` row keeps running and keeps owning
-# `ctx.compaction`. This row only adds one model-facing tool plus the
-# after-turn trigger that calls the native `compactNow()` seam.
+# `ctx.compaction`. This row only adds one model-facing tool, the autonomous
+# triggers, and the after-turn trigger that calls the native `compactNow()` seam.
 #
-# Optional keys (all optional; defaults shown):
-# - floorPct: 0.30          hard floor, fraction of the context window
-# - minSavingK: 100         floor is also at least baseline + 20k + this many k
-# - nudgeStartPct: 0.40     first nudge, raised to floorPct when lower
-# - nudgeStepPct: 0.10      gap between nudges
-# - urgentPct: 0.55         escalated nudge wording
+# Optional keys (defaults shown). Tiers derive from the learned post-compact
+# size P through a break-even formula; see docs/en/DESIGN.md section 4.
+# - floorCalls: 20          floor = context that repays a compaction within N calls
+# - nodeCalls: 10           any clean node from here
+# - workCalls: 8            turn-end self-check after a block of work from here
+# - floorPct: 0             optional extra floor, fraction of the window
+# - urgentK: 350            urgent tier in k tokens, capped at 80% of the window
+# - summaryK: 10            estimated summary length, k output tokens
+# - cacheReadRatio: 0.1     cache-hit price / cache-miss price
+# - outputRatio: 1.5        output price / cache-miss price
+# - nudgeStepPct: 0.05      gap between nudges, fraction of the window
+# - autoNodes: true         node flags, turn-end self-check, block-start hint
+# - turnEndCheck: true      the turn-end self-check alone
+# - hotWindow: 20           a skill used within N main steps is carried
+# - refInlineK: 2           inline a skill reference up to N k tokens
+# - skillBudgetK: 6         total k tokens of inlined skill references
 # - continuation: true      submit a continuation prompt after compaction
+# - dataDir: ''             state directory, default ~/.dsh/self-compact
+# - language: en            en | zh for every model-facing line
 # - enabled: true           false keeps the tool registered but denies every call
 - insert:
     - id: self-compact
