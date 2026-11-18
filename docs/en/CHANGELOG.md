@@ -2,6 +2,34 @@
 
 All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [0.2.0] — 2026-11-18
+
+Ports the Claude-side plugin's 0.2–0.7 design to Harness.
+
+### Changed
+
+- Every tier derives from P, the learned post-compact size, through a break-even formula priced for DeepSeek-class routes: one compaction costs `o*S + r*C + (1-r)*P` (summary output, the summarizer replaying the cached prefix, re-caching the new prefix), not compacting costs `r*(C-P)` per call, so `C(N) = (F/r + N*P) / (N-1)` with `F = o*S + (1-r)*P`. Floor `C(floorCalls=20)`, node `C(nodeCalls=10)`, work `C(workCalls=8)`, urgent `min(urgentK=350k, 0.8 x window)`; each tier capped at urgent, then raised to `P + 25k`. With the default P (90k) the floor is 145k, 14.5% of a 1M window; 0.1.x denied below 30%.
+- P is measured right after each compaction (`tokenMeter.measure()` already replays the new tail, so no next-step wait), folded into an EWMA per project and globally in `~/.dsh/self-compact/profile.json` (outliers damped, three same-side outliers reset), written under a lock directory with an atomic rename because several dsh processes share it. Fallback: this session's sample, the project, the global estimate, then the session's first non-zero measured size + 25k.
+- The tool description names the tiers in tokens for the learned P. It is rendered once per process, so the prompt cache holds.
+- Nudges start at the node tier and repeat every `nudgeStepPct` (5% of the window); crossing urgent escalates at once. A one-time note when the harness itself is so large that compaction barely pays.
+- All model-facing text moved to `lib/strings.js` (en, zh), including the continuation labels.
+- Configuration: removed `minSavingK`, `baselineK`, `retainK`, `nudgeStartPct`, `urgentPct`, `handoffDir`, `logPath`; added `floorCalls`, `nodeCalls`, `workCalls`, `urgentK`, `summaryK`, `cacheReadRatio`, `outputRatio`, `autoNodes`, `turnEndCheck`, `hotWindow`, `refInlineK`, `skillBudgetK`, `dataDir`. Unknown keys are ignored.
+
+### Added
+
+- Autonomous triggers (`autoNodes`). Node detection over dsh tools: `git push`/`merge`/`tag`, PR/MR create/review/merge, `gh issue comment`/`close`, outbound `gog`/`agent-slack`/`slack`/`outlook` sends, a spec/plan or `handoff*` write (`write`, `edit`, `str_replace_editor`, `apply_patch`), an all-completed `todo_write` (strong); `git commit`, a passing test command, a new `.md`, a returned `subagent`/`wait_agent` (weak). A flag rides the next step once per turn. Turn-end self-check on the idle transition: after a node, a turn with two or more tool calls at the work tier, or a long stretch at the node tier, one prompt asks the model to compact or answer `skip: <reason>`; once per trigger per 5 points, never twice without tool activity in between (calls inside the check turn do not count); a `skip:` also holds the size-only triggers for 5 points. Block-start hint on every human prompt once the gate is open. Every prompt states that the size tier is only a necessary condition; the model compacts when three criteria hold (block closed, next work does not depend on large raw text in context, enough work left to repay it).
+- Language rules: optional `language: {chat, outputs[]}` on `compact_now`; given value, then the previous compaction's, then the language detected from the user's last 5 messages. Carried in the handoff file's first section, the continuation's first line and the first 3 real user prompts after a compaction; `lang-drift` logged once when the first answer after a compaction is in the other language.
+- Skill working set: the `skill` tool's `resourceBase` directory is tracked per skill, and reads under it become refs (8 max). At compaction a skill is hot when kept (`keep_skills`), used within `hotWindow` main steps, or its learned miss rate is at least 0.3 over 3+ compactions; `drop_skills` marks it finished. The continuation lists each hot skill's `SKILL.md` and inlines refs up to `refInlineK` within `skillBudgetK`, the rest by path. Reading a listed ref within 30 steps is a `skill-ref-miss` and feeds the profile.
+- The handoff file carries the session's original request (first real user message, 1,500 characters, read from the append-only log, so it survives any number of compactions) and the user's last 5 messages.
+- Stale requests: more than 3 tool calls after `compact_now` in the same turn drop the request and tell the model.
+- Subagents (`header.origin === 'subagent'` or `delegationDepth > 0`) are denied and get no triggers; headless, SDK and ACP sessions get no triggers.
+- The continuation points at `session_search` / `session_event_search` for exact pre-compaction strings.
+- `log.jsonl` rotates past 2 MB. New records: `p-sample`, `stale`, `node-nudge`, `self-check`, `self-check:compacted`, `self-check:declined`, `lang-drift`, `skill-ref-miss`, `skill-ref-reread`; `queued` and `done` gain `langSource`, `done` gains `skills`.
+
+### Not ported
+
+- Summarizer instructions. The engine's `summarize()` appends its own fixed instruction and only sees the folded prefix; the newest messages, `compact_now`'s result among them, sit in the verbatim retained tail. Steering the summary still needs the engine takeover in `docs/en/DESIGN.md` §2; the continuation remains the carrier.
+
 ## [0.1.5] — 2026-11-17
 
 ### Fixed

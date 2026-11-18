@@ -39,6 +39,6 @@ jobs:
           console.log('manifest ok');"
       - name: Non-ASCII scan of manifest and config
         run: |
-          # Manifest and config stay ASCII. lib/index.js legitimately carries the
+          # Manifest and config stay ASCII. lib/strings.js legitimately carries the
           # Chinese tool text used when `language: zh`; prose files are Chinese.
           ! grep -Pn '[^\x00-\x7F]' cordis.patch.yml package.json .github/workflows/ci.yml
