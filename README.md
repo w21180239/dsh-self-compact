@@ -257,7 +257,7 @@ then restart. Nothing else is touched; delete `~/.dsh/self-compact/` to drop the
 npm test     # node --import ./tests/register.mjs --test tests/logic.test.mjs
 ```
 
-The 35 offline tests drive the real plugin entry against a fake host (`tests/loader.mjs` points the two host imports at stubs): the break-even tiers and P learning, the gate, handoff rendering, language rules, the queue → compaction → continuation path, user takeover, the checkpoint false positive, `null` results, retry limits, nudges, node detection and the turn-end self-check, stale requests, the skill working set, subagents, post-compaction accounting, and the reread rate.
+The 36 offline tests drive the real plugin entry against a fake host (`tests/loader.mjs` points the two host imports at stubs): the break-even tiers and P learning, the gate, handoff rendering, language rules, the queue → compaction → continuation path, user takeover, the checkpoint false positive, `null` results, retry limits, nudges, node detection and the turn-end self-check, stale requests, the skill working set, subagents, post-compaction accounting, and the reread rate.
 
 A live check of the 0.1 line on an isolated `DSH_HOME` + headless profile produced:
 

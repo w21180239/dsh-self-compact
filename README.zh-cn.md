@@ -255,7 +255,7 @@ dsh plugin --profile <名字> remove dsh-self-compact
 npm test     # node --import ./tests/register.mjs --test tests/logic.test.mjs
 ```
 
-35 项离线测试驱动真实插件入口（`tests/loader.mjs` 把两个宿主包换成桩），覆盖回本档位与 P 的学习、门槛、交接渲染、语言约定、排队→压缩→续跑、用户抢话、检查点误判、`null` 结果、重试上限、提醒、节点识别与轮末自检、过期请求、skill 工作集、子代理、压缩后计量、回读率。
+36 项离线测试驱动真实插件入口（`tests/loader.mjs` 把两个宿主包换成桩），覆盖回本档位与 P 的学习、门槛、交接渲染、语言约定、排队→压缩→续跑、用户抢话、检查点误判、`null` 结果、重试上限、提醒、节点识别与轮末自检、过期请求、skill 工作集、子代理、压缩后计量、回读率。
 
 0.1 版在隔离 `DSH_HOME` + headless profile 上的真机实测：
 
