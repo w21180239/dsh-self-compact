@@ -37,7 +37,7 @@ Every record carries `ts` (ISO 8601) and `session` (session id). Records about a
 ## Example
 
 ```json
-{"ts":"2026-11-18T04:54:06.301Z","session":"s-da68","node":"MR up","pct":21.4,"result":"queued","file":"C:\\Users\\Wei\\.dsh\\self-compact\\handoff\\2026-11-18T04-54-06-300Z-mr-up.md","langSource":"tool"}
+{"ts":"2026-11-18T04:54:06.301Z","session":"s-da68","node":"MR up","pct":21.4,"result":"queued","file":"C:\\Users\\me\\.dsh\\self-compact\\handoff\\2026-11-18T04-54-06-300Z-mr-up.md","langSource":"tool"}
 {"ts":"2026-11-18T04:54:31.807Z","session":"s-da68","node":"MR up","result":"done","beforePct":21.4,"afterPct":6.2,"dropped":171000,"durationMs":25334,"langSource":"tool","skills":{"hot":["git-workflow"],"done":[],"inlinedK":1,"listed":0}}
 {"ts":"2026-11-18T04:54:31.809Z","session":"s-da68","result":"p-sample","pSample":62000,"p":62000}
 {"ts":"2026-11-18T04:54:31.810Z","session":"s-da68","node":"MR up","result":"continued"}
