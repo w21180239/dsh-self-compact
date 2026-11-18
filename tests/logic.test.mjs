@@ -310,6 +310,24 @@ test('a call below the floor is denied and schedules nothing', async () => {
   assert.equal(readLog(dir).at(-1).result, 'denied:below-floor');
 });
 
+test('the baseline is the first non-zero early reading, not step 1 alone', async () => {
+  // A live host reads 0 on step 1 (no usage sample yet).
+  const host = fakeHost({ used: 0 });
+  apply(host.ctx, { ...FAST, dataDir: tmp('baseline') });
+  const early = fakeAgent({ id: 'baseline-early' });
+  await preStep(host, early, 1);
+  host.used = 40_000;
+  await preStep(host, early, 2);
+  assert.match(await host.tool().execute({ node: 'n', next_step: 's' }, execOf(early)), /leaves ~65k/);
+
+  host.used = 0;
+  const late = fakeAgent({ id: 'baseline-late' });
+  for (let step = 1; step <= 4; step += 1) await preStep(host, late, step);
+  host.used = 40_000;
+  await preStep(host, late, 5);
+  assert.match(await host.tool().execute({ node: 'n', next_step: 's' }, execOf(late)), /leaves ~90k/, 'a late first reading is no baseline');
+});
+
 test('an accepted call compacts at idle, learns P and resumes from the handoff', async () => {
   const dir = tmp('accepted');
   let calls = 0;
