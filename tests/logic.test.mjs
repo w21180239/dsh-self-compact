@@ -368,6 +368,7 @@ test('an accepted call compacts at idle, learns P and resumes from the handoff',
   assert.match(body, /## Original request\n\n```\nport the plugin\n```/);
   assert.deepEqual(readLog(dir).map((e) => e.result), ['queued', 'done', 'p-sample', 'continued']);
   assert.equal(readLog(dir)[2].pSample, 61_000);
+  assert.equal(readLog(dir)[2].p, 61_000, 'p is the project estimate, not the trusted planning value');
   assert.equal(loadProfile(path.join(dir, 'profile.json')).byProject['D:/proj'].p, 61_000);
 });
 
@@ -534,6 +535,31 @@ test('turn-end self-check fires after a node and logs the skip reason', async ()
   assert.deepEqual(log.filter((e) => e.result.startsWith('self-check')).map((e) => e.result), ['self-check', 'self-check:declined']);
   assert.equal(log.at(-1).reason, 'waiting for CI');
   assert.equal(agent.followups.length, 1, 'no second check without tool activity');
+});
+
+test('a declined check is not followed by a size-only check', async () => {
+  // Live: a node check declined at 19.6%, then a long-stretch check fired 2 s later.
+  const dir = tmp('declined-size');
+  const events = [];
+  const host = fakeHost({ used: 300_000 });
+  apply(host.ctx, { ...FAST, dataDir: dir });
+  const agent = fakeAgent({ id: 'declined-size', events });
+  await preStep(host, agent, 1, [userEvent('go').data]);
+  host.listener('tools/result')({ agent, name: 'todo_write', arguments: { todos: [{ content: 'x', status: 'completed' }] } }, { isError: false });
+  agent.status = 'idle';
+  host.listener('agent/status')({ status: 'idle', agent });
+  await settle();
+  assert.equal(agent.followups.length, 1);
+
+  // The check turn: a tool call still lands, then the model declines.
+  agent.status = 'running';
+  await preStep(host, agent, 1, []);
+  host.listener('tools/result')({ agent, name: 'read', arguments: { file_path: 'x' } }, { isError: false });
+  events.push(assistantEvent('skip: nothing left'));
+  agent.status = 'idle';
+  host.listener('agent/status')({ status: 'idle', agent });
+  await settle();
+  assert.equal(agent.followups.length, 1, 'neither the check turn\'s own call nor the size tier re-asks');
 });
 
 test('no self-check in a non-interactive session', async () => {

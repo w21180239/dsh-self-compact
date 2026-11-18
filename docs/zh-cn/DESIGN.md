@@ -66,7 +66,7 @@ agent/status (idle) ──► request.trigger()   ← 快路径
 5. **上下文正在拆算 `abandoned`，不算 `failed`**：组合已在拆除时 cordis 抛 `inactive context`（headless 单次任务常见），重试无意义，`isInactiveContext()` 直接短路。
 6. **续跑不另起任务**：只带 `next` 和未完成项；排队后若你提交了真消息，续跑丢弃、压缩照常完成。
 7. **回合记账在 `agent/pre-step` 的 step 1 上做。** 它开启回合，并清掉本回合的信号、提醒标记、`compact_now` 标记和工具调用计数。紧跟在一次自检之后、且没有人类消息（没有 `source.kind === 'user'` 的消息）的 step 1 就是自检回合，它的结果在 idle 时归类为 `self-check:compacted` 或 `self-check:declined`。
-8. **自检在 idle 上做。** `agent/status` 的 idle 处理器收尾回合，并可能安排一次自检：等 `debounceMs` 之后，若 agent 仍然 idle 且门槛仍然打开，就用一次 `agent.followup` 送出提示。同一种触发每涨 5 个百分点最多一次；本回合已调用过 `compact_now`、最后一个工具是 `ask_user_question`、或上次自检以来没有任何工具活动时都不发。
+8. **自检在 idle 上做。** `agent/status` 的 idle 处理器收尾回合，并可能安排一次自检：等 `debounceMs` 之后，若 agent 仍然 idle 且门槛仍然打开，就用一次 `agent.followup` 送出提示。同一种触发每涨 5 个百分点最多一次；本回合已调用过 `compact_now`、最后一个工具是 `ask_user_question`、或上次自检以来没有任何工具活动时都不发（自检回合里、或回合之外的调用不算）。自检被拒后，两种只看大小的触发（work 档、停留过久）也要等上下文再涨 5 个百分点，只有节点信号能更早再问。
 9. **过期规则。** `compact_now` 之后到 idle 之前又调用了超过 3 次其他工具，说明模型还在干活，交接已不再描述当前状态，请求被丢弃（`stale`），并在下一步告诉模型：仍要压就重新调用。
 10. **子代理和非交互会话不参与。** header 里 `origin === 'subagent'`（或 `delegationDepth > 0`）的会话被拒绝、也没有任何行；headless、SDK、ACP 宿主没有触发。
 
