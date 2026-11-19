@@ -2,6 +2,24 @@
 
 All notable changes are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow [SemVer](https://semver.org/).
 
+## [0.2.2] — 2026-11-19
+
+### Fixed
+
+- A queued `compact_now` no longer abandons itself while the agent is still busy. The old
+  fallback gave up after 30 polls (~7.5 s), which is shorter than the usual turn tail: any
+  request whose turn outlived the budget logged `abandoned:agent-busy` and dropped the
+  handoff. The queue now waits for a wall-clock budget, `maxIdleWaitMs` (180 s), keeping the
+  `agent/status` idle event as the fast path, logs `waiting:agent-busy` once past the old
+  poll count, and records `waitedMs` when the budget really expires.
+- Idle-poll timers are `unref`ed and cleared when a request resolves, so a resolved queue
+  entry cannot keep the process alive (the offline suite drops from ~181 s to ~1.5 s).
+
+### Added
+
+- `maxIdleWaitMs` as a timing key; `maxIdlePolls` is kept as the legacy poll count used only
+  when `maxIdleWaitMs` is 0.
+- Regression tests for the busy-wait path and for the budget expiry.
 ## [0.2.1] — 2026-11-18
 
 ### Fixed

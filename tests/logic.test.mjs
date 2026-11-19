@@ -651,3 +651,39 @@ test('the skill working set: refs tracked, inlined after compaction, counted in 
   assert.ok(log.some((e) => e.result === 'skill-ref-reread'));
   assert.equal(loadProfile(path.join(dir, 'profile.json')).skills.briefcase.refMisses, 1);
 });
+
+test('a busy agent keeps the queue and compacts at the next idle', async () => {
+  const dir = tmp('busy-wait');
+  const host = fakeHost({ used: 520_000, compact: async () => ({ shadowedTokenCount: 10 }) });
+  apply(host.ctx, { ...FAST, dataDir: dir, idlePollMs: 25, maxIdlePolls: 1, maxIdleWaitMs: 5_000 });
+  const agent = fakeAgent({ id: 'busy', ctx: host.ctx, status: 'running' });
+  const reply = await host.tool().execute({ node: 'n', next_step: 's' }, execOf(agent));
+  assert.match(reply, /scheduled/);
+
+  await settle(150);
+  const during = readLog(dir).map((e) => e.result);
+  assert.equal(during.includes('abandoned:agent-busy'), false, 'a busy agent must not lose the queue');
+  assert.ok(during.includes('waiting:agent-busy'), 'the wait is logged once');
+
+  agent.status = 'idle';
+  host.listener('agent/status')({ status: 'idle', agent });
+  await settle(60);
+  assert.equal(readLog(dir).at(-1).result, 'continued');
+  assert.ok(readLog(dir).some((e) => e.result === 'done'));
+});
+
+test('the queue is abandoned only after the wall-clock budget expires', async () => {
+  const dir = tmp('busy-deadline');
+  const host = fakeHost({ used: 520_000 });
+  apply(host.ctx, { ...FAST, dataDir: dir, idlePollMs: 25, maxIdlePolls: 0, maxIdleWaitMs: 80 });
+  const agent = fakeAgent({ id: 'stuck', ctx: host.ctx, status: 'running' });
+  await host.tool().execute({ node: 'n', next_step: 's' }, execOf(agent));
+
+  await settle(60);
+  assert.equal(readLog(dir).some((e) => e.result === 'abandoned:agent-busy'), false, 'still inside the budget');
+
+  await settle(160);
+  const last = readLog(dir).at(-1);
+  assert.equal(last.result, 'abandoned:agent-busy');
+  assert.ok(last.waitedMs >= 80, 'records how long it waited');
+});

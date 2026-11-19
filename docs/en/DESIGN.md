@@ -65,7 +65,7 @@ agent/status (idle) ──► request.trigger()  ← the fast path
 Rules that must hold:
 
 1. **One request per session.** A second call while one is queued returns the existing node instead of stacking; `queued` is keyed by `session.id`.
-2. **Idle is the trigger, not the turn end.** `agent/status` flips to `idle` exactly when the turn is over. The debounce timer is a fallback for hosts that never emit it; polling exists for the same reason and gives up after `maxIdlePolls`.
+2. **Idle is the trigger, not the turn end.** `agent/status` flips to `idle` exactly when the turn is over. The debounce timer is a fallback for hosts that never emit it; polling exists for the same reason and keeps waiting for `maxIdleWaitMs` before it gives up.
 3. **`compactNow()` is never wrapped in `agent.runMaintenance()`.** The engine reserves the idle phase itself; wrapping it would throw `busy`.
 4. **Every exit logs exactly one terminal line**: `done`, `skipped:no-range`, `failed:<code>`, `abandoned:<reason>`, `stale`. Retries log `retry:<code>` and stay queued.
 5. **Torn-down contexts are `abandoned`, not `failed`.** Cordis throws `cannot get required service "compaction" in inactive context` when the composition is already disposing (headless one-shot runs). Retrying that is pointless, so `isInactiveContext()` short-circuits it.
@@ -177,7 +177,7 @@ Handoff filenames are `ISO-time-with-dashes` + a slug of `node` (lowercase, `[a-
 | `denied: only the main session compacts …` | called from a subagent |
 | `a compaction is already scheduled (node …)` | duplicate call; the queued request stays |
 
-`log.jsonl` `result` values: `queued`, `done`, `p-sample`, `continued`, `stale`, `reread`, `reread-rate`, `node-nudge`, `self-check`, `self-check:compacted`, `self-check:declined`, `lang-drift`, `skill-ref-miss`, `skill-ref-reread`, `retry:<code>`, `skipped:no-range`, `denied:<reason>`, `failed:<code>`, `abandoned:context-disposed|agent-busy|no-engine`.
+`log.jsonl` `result` values: `queued`, `done`, `p-sample`, `continued`, `stale`, `reread`, `reread-rate`, `node-nudge`, `self-check`, `self-check:compacted`, `self-check:declined`, `lang-drift`, `skill-ref-miss`, `skill-ref-reread`, `retry:<code>`, `skipped:no-range`, `denied:<reason>`, `failed:<code>`, `waiting:agent-busy`, `abandoned:context-disposed|agent-busy|no-engine`.
 
 ## 9. Testing strategy
 

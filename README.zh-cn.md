@@ -182,7 +182,7 @@ dsh --profile <名字> --dump-config | Select-String self-compact
 | `dataDir` | `''` | 状态目录；空表示 `~/.dsh/self-compact` |
 | `language` | `en` | `zh` 时工具说明、拒因、提醒、续跑提示走中文 |
 
-默认值通常够用、很少需要改的时间类键：`debounceMs`（1500，回合结束到压缩或自检之间的缓冲）、`retryDelayMs`（2000）、`maxRetries`（5）、`idlePollMs`（250）、`maxIdlePolls`（30）、`rereadWindowMs`（1800000，压缩后观察调用的时长）。
+默认值通常够用、很少需要改的时间类键：`debounceMs`（1500，回合结束到压缩或自检之间的缓冲）、`retryDelayMs`（2000）、`maxRetries`（5）、`idlePollMs`（250）、`maxIdleWaitMs`（180000，排队的压缩等 agent 变 idle 的最长时间）、`maxIdlePolls`（30，仅在 `maxIdleWaitMs` 为 0 时使用的旧轮询次数）、`rereadWindowMs`（1800000，压缩后观察调用的时长）。
 
 ## 可观测
 

@@ -184,7 +184,7 @@ Override under `- id: self-compact` in the profile's `cordis.patch.yml`. Unknown
 | `dataDir` | `''` | state directory; empty means `~/.dsh/self-compact` |
 | `language` | `en` | `zh` for Chinese tool text, denials, nudges and continuation |
 
-Timing keys that suit the defaults and rarely need a change: `debounceMs` (1500, buffer between turn end and compaction or self-check), `retryDelayMs` (2000), `maxRetries` (5), `idlePollMs` (250), `maxIdlePolls` (30), `rereadWindowMs` (1800000, how long to watch calls after a compaction).
+Timing keys that suit the defaults and rarely need a change: `debounceMs` (1500, buffer between turn end and compaction or self-check), `retryDelayMs` (2000), `maxRetries` (5), `idlePollMs` (250), `maxIdleWaitMs` (180000, how long a queued compaction keeps waiting for the agent to turn idle), `maxIdlePolls` (30, legacy poll count used only when `maxIdleWaitMs` is 0), `rereadWindowMs` (1800000, how long to watch calls after a compaction).
 
 ## Observability
 

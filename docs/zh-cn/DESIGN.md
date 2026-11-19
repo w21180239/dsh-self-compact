@@ -60,7 +60,7 @@ agent/status (idle) ──► request.trigger()   ← 快路径
 必须成立的规则：
 
 1. **每个会话只有一个请求**：排队期间再次调用返回已有节点，不叠加；`queued` 按 `session.id` 索引。
-2. **触发靠 idle，不靠回合结束**：`agent/status` 变 `idle` 就是回合结束的那一刻；debounce 定时器是不发该事件的宿主上的兜底，轮询同理，超过 `maxIdlePolls` 放弃。
+2. **触发靠 idle，不靠回合结束**：`agent/status` 变 `idle` 就是回合结束的那一刻；debounce 定时器是不发该事件的宿主上的兜底，轮询同理，等到 `maxIdleWaitMs` 才放弃。
 3. **`compactNow()` 不套 `agent.runMaintenance()`**：引擎自己会占 idle 阶段，套一层就 `busy`。
 4. **每次退出只写一条终态**：`done`、`skipped:no-range`、`failed:<code>`、`abandoned:<原因>`、`stale`；重试写 `retry:<code>` 并继续排队。
 5. **上下文正在拆算 `abandoned`，不算 `failed`**：组合已在拆除时 cordis 抛 `inactive context`（headless 单次任务常见），重试无意义，`isInactiveContext()` 直接短路。
@@ -170,7 +170,7 @@ urgent = min(urgentK = 350k, 0.8 * 窗口)
 | `denied: only the main session compacts …` | 从子代理里调用 |
 | `a compaction is already scheduled (node …)` | 重复调用，原请求保留 |
 
-`log.jsonl` 的 `result`：`queued`、`done`、`p-sample`、`continued`、`stale`、`reread`、`reread-rate`、`node-nudge`、`self-check`、`self-check:compacted`、`self-check:declined`、`lang-drift`、`skill-ref-miss`、`skill-ref-reread`、`retry:<code>`、`skipped:no-range`、`denied:<原因>`、`failed:<code>`、`abandoned:context-disposed|agent-busy|no-engine`。
+`log.jsonl` 的 `result`：`queued`、`done`、`p-sample`、`continued`、`stale`、`reread`、`reread-rate`、`node-nudge`、`self-check`、`self-check:compacted`、`self-check:declined`、`lang-drift`、`skill-ref-miss`、`skill-ref-reread`、`retry:<code>`、`skipped:no-range`、`denied:<原因>`、`failed:<code>`、`waiting:agent-busy`、`abandoned:context-disposed|agent-busy|no-engine`。
 
 ## 9. 测试策略
 
